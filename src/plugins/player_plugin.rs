@@ -1,19 +1,17 @@
+use bevy::camera::visibility::VisibleEntities;
 use bevy::color::palettes::css::{BLACK, CRIMSON};
 use bevy::input::InputSystems;
 use bevy::input::mouse::MouseMotion;
 use bevy::prelude::*;
 use bevy::window::{CursorGrabMode, CursorOptions};
-use bevy_rapier3d::control::{
-    CharacterAutostep, CharacterLength, KinematicCharacterController, KinematicCharacterControllerOutput,
-};
-use bevy_rapier3d::geometry::Collider;
+use bevy_rapier3d::prelude::*;
 
-use crate::components::LoadingOverlay;
+use crate::components::{Door, HelpOverlay, HelpOverlayText, LoadingOverlay};
 use crate::constants::*;
 use crate::resources::{LookInput, MovementInput};
 use crate::states::{AppState, GameState};
 
-use super::icon_button;
+use super::{Vec3Trait, VisibleEntitiesTrait, icon_button};
 
 pub struct PlayerPlugin;
 
@@ -129,9 +127,6 @@ fn setup_player(
             ));
         });
 
-    let right_icon = asset_server.load(ASSET_PATH_IMAGE_RIGHT);
-    let exit_icon = asset_server.load(ASSET_PATH_IMAGE_EXIT_RIGHT);
-
     // Loading overlay
     commands.spawn((
         DespawnOnExit(AppState::Game),
@@ -147,6 +142,24 @@ fn setup_player(
         BackgroundColor(BLACK.into()),
         children![Text::new("Loading...")],
     ));
+
+    // Help overlay
+    commands.spawn((
+        DespawnOnExit(AppState::Game),
+        HelpOverlay,
+        Visibility::Hidden,
+        Node {
+            width: percent(100.0),
+            height: percent(100.0),
+            align_items: AlignItems::Center,
+            justify_content: JustifyContent::Center,
+            ..default()
+        },
+        children![(Text::new(""), HelpOverlayText)],
+    ));
+
+    let right_icon = asset_server.load(ASSET_PATH_IMAGE_RIGHT);
+    let exit_icon = asset_server.load(ASSET_PATH_IMAGE_EXIT_RIGHT);
 
     // Pause menu
     commands.spawn((
@@ -247,13 +260,20 @@ fn setup_player(
     ));
 }
 
+#[allow(clippy::too_many_arguments)]
 fn handle_input(
+    mut commands: Commands,
     mut keyboard: ResMut<ButtonInput<KeyCode>>,
     mut movement: ResMut<MovementInput>,
     mut look: ResMut<LookInput>,
     mut mouse_events: MessageReader<MouseMotion>,
     game_state: Res<State<GameState>>,
     mut next_game_state: ResMut<NextState<GameState>>,
+    player_query: Query<&GlobalTransform, With<KinematicCharacterController>>,
+    mut door_query: Query<(Entity, &mut Door, &GlobalTransform)>,
+    children_query: Query<&Children>,
+    mut animation_player_query: Query<(Entity, &mut AnimationPlayer)>,
+    camera_query: Query<&VisibleEntities, With<Camera>>,
 ) {
     if keyboard.just_pressed(KeyCode::Escape) {
         if game_state.get().is_paused() {
@@ -270,6 +290,49 @@ fn handle_input(
         mouse_events.clear();
 
         return;
+    }
+
+    if keyboard.just_pressed(KeyCode::KeyE)
+        && let Ok(player_transform) = player_query.single()
+        && let Ok(camera_visible_entities) = camera_query.single()
+        && let Some((door_entity, mut door, _)) = door_query
+            .iter_mut()
+            .filter(|(e, d, t)| {
+                let door_translation = if d.is_open {
+                    t.translation() + (t.forward() * 0.5)
+                } else {
+                    t.translation()
+                };
+
+                door_translation.is_near(&player_transform.translation())
+                    && children_query
+                        .iter_descendants(*e)
+                        .any(|ce| camera_visible_entities.is_visible(ce))
+            })
+            .min_by(|(_, _, t1), (_, _, t2)| {
+                t1.translation()
+                    .distance(player_transform.translation())
+                    .partial_cmp(&t2.translation().distance(player_transform.translation()))
+                    .unwrap()
+            })
+    {
+        door.is_open = !door.is_open;
+
+        for child_entity in children_query.iter_descendants(door_entity) {
+            if let Ok((entity, mut animation_player)) = animation_player_query.get_mut(child_entity) {
+                if door.is_open {
+                    commands
+                        .entity(entity)
+                        .insert(AnimationGraphHandle(door.open_graph.clone()));
+                    animation_player.start(door.open_node_index);
+                } else {
+                    commands
+                        .entity(entity)
+                        .insert(AnimationGraphHandle(door.close_graph.clone()));
+                    animation_player.start(door.close_node_index);
+                }
+            }
+        }
     }
 
     if keyboard.pressed(KeyCode::KeyW) {
