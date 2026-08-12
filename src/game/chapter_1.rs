@@ -1,9 +1,12 @@
+use std::f32::consts::{FRAC_PI_2, PI};
+
 use bevy::color::palettes::css::SKY_BLUE;
 use bevy::light::NotShadowCaster;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
-use crate::constants::ASSET_PATH_MAP_CHAPTER_1;
+use crate::components::Door;
+use crate::constants::{ASSET_PATH_MAP_CHAPTER_1, ASSET_PATH_OBJECT_DOOR};
 use crate::resources::LoadingData;
 use crate::states::AppState;
 
@@ -49,5 +52,86 @@ pub fn setup_map_chapter_1(
         })),
         Transform::default(),
         NotShadowCaster,
+    ));
+}
+
+pub fn setup_objects_chapter_1(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut loading_data: ResMut<LoadingData>,
+    mut animation_graphs: ResMut<Assets<AnimationGraph>>,
+) {
+    let door_close_animation = asset_server.load(GltfAssetLabel::Animation(0).from_asset(ASSET_PATH_OBJECT_DOOR));
+    let door_open_animation = asset_server.load(GltfAssetLabel::Animation(1).from_asset(ASSET_PATH_OBJECT_DOOR));
+    let door_asset = asset_server.load(GltfAssetLabel::Scene(0).from_asset(ASSET_PATH_OBJECT_DOOR));
+
+    loading_data.assets.push(door_asset.clone().into());
+
+    let (close_graph, close_node_index) = AnimationGraph::from_clip(door_close_animation);
+
+    let close_graph_handle = animation_graphs.add(close_graph);
+
+    let (open_graph, open_node_index) = AnimationGraph::from_clip(door_open_animation);
+
+    let open_graph_handle = animation_graphs.add(open_graph);
+
+    commands.spawn((
+        DespawnOnExit(AppState::Game),
+        Door::new(
+            close_graph_handle.clone(),
+            close_node_index,
+            open_graph_handle.clone(),
+            open_node_index,
+        ),
+        Transform::from_xyz(-0.06, 1.3, -17.356),
+        WorldAssetRoot(door_asset.clone()),
+        AsyncCollider::default(),
+    ));
+
+    commands.spawn((
+        DespawnOnExit(AppState::Game),
+        Door::new(
+            close_graph_handle.clone(),
+            close_node_index,
+            open_graph_handle.clone(),
+            open_node_index,
+        ),
+        Transform::from_xyz(-1.018, 1.3, -20.386).with_rotation(Quat::from_rotation_y(FRAC_PI_2)),
+        WorldAssetRoot(door_asset.clone()),
+        AsyncCollider::default(),
+    ));
+
+    commands.spawn((
+        DespawnOnExit(AppState::Game),
+        Door::new(
+            close_graph_handle.clone(),
+            close_node_index,
+            open_graph_handle.clone(),
+            open_node_index,
+        ),
+        Transform::from_xyz(-1.018, 1.3, -24.133).with_rotation(Quat::from_rotation_y(FRAC_PI_2)),
+        WorldAssetRoot(door_asset.clone()),
+        AsyncCollider::default(),
+    ));
+
+    commands.spawn((
+        DespawnOnExit(AppState::Game),
+        Door::new(
+            close_graph_handle.clone(),
+            close_node_index,
+            open_graph_handle.clone(),
+            open_node_index,
+        ),
+        Transform::from_xyz(0.099, 1.3, -25.182),
+        WorldAssetRoot(door_asset.clone()),
+        AsyncCollider::default(),
+    ));
+
+    commands.spawn((
+        DespawnOnExit(AppState::Game),
+        Door::new(close_graph_handle, close_node_index, open_graph_handle, open_node_index),
+        Transform::from_xyz(3.145, 1.3, -27.206).with_rotation(Quat::from_rotation_y(PI)),
+        WorldAssetRoot(door_asset),
+        AsyncCollider::default(),
     ));
 }
