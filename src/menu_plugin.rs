@@ -4,10 +4,9 @@ use bevy::prelude::*;
 
 use crate::components::SelectedOption;
 use crate::constants::*;
+use crate::helpers::{icon_button, text_button};
 use crate::resources::{DisplayQuality, Volume};
 use crate::states::AppState;
-
-use super::{icon_button, text_button};
 
 pub struct MenuPlugin;
 
