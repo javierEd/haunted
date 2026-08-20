@@ -1,6 +1,5 @@
-use bevy::prelude::*;
+use bevy::state::state::States;
 
-// Enum that will be used as a global state for the app
 #[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States)]
 pub enum AppState {
     #[default]
@@ -9,18 +8,8 @@ pub enum AppState {
     Game,
 }
 
-// Enum that will be used as a global state for the game
-#[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States)]
-pub enum GameState {
-    #[default]
-    Loading,
-    Playing,
-    Paused,
-    Over,
-}
-
-impl GameState {
-    pub fn is_paused(&self) -> bool {
-        self == &GameState::Paused
+impl AppState {
+    pub fn is_game(&self) -> bool {
+        matches!(self, AppState::Game)
     }
 }

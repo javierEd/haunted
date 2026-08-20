@@ -2,16 +2,19 @@ use bevy::prelude::*;
 
 mod components;
 mod constants;
-mod game;
-mod plugins;
+mod game_plugin;
+mod helpers;
+mod menu_plugin;
 mod resources;
+mod splash_plugin;
 mod states;
-mod systems;
 
-use crate::plugins::{GamePlugin, MenuPlugin, SplashPlugin};
+use crate::game_plugin::GamePlugin;
+use crate::helpers::button_system;
+use crate::menu_plugin::MenuPlugin;
 use crate::resources::{DisplayQuality, Volume};
+use crate::splash_plugin::SplashPlugin;
 use crate::states::AppState;
-use crate::systems::button_system;
 
 fn main() {
     App::new()
