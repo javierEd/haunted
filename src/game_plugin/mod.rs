@@ -12,8 +12,8 @@ mod plugins;
 mod resources;
 mod states;
 
-use crate::game_plugin::plugins::*;
-use crate::game_plugin::states::{ChapterState, GameState};
+use self::plugins::*;
+use self::states::{ChapterState, GameState};
 
 pub struct GamePlugin;
 
@@ -33,6 +33,7 @@ impl Plugin for GamePlugin {
                 ..default()
             },
             LoadingOverlayPlugin,
+            InputPlugin,
             PlayerPlugin,
             PlayerInteractionPlugin,
             DialogBoxPlugin,
@@ -52,7 +53,6 @@ fn setup_game(mut chapter_state: ResMut<NextState<ChapterState>>) {
     chapter_state.set(ChapterState::One);
 }
 
-#[allow(clippy::type_complexity)]
 fn update_colliders(
     mut commands: Commands,
     collider_query: Query<(Entity, &AsyncCollider), With<WorldInstance>>,

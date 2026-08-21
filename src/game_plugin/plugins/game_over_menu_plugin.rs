@@ -88,7 +88,6 @@ fn show_game_over_menu(mut query: Query<&mut Visibility, With<GameOverMenu>>) {
     }
 }
 
-#[allow(clippy::type_complexity)]
 fn game_over_menu_action(
     interaction_query: Query<(&Interaction, &GameOverMenuAction), (Changed<Interaction>, With<Button>)>,
     mut app_state: ResMut<NextState<AppState>>,

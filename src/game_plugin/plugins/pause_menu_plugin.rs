@@ -106,7 +106,6 @@ fn toggle_pause_menu(
     }
 }
 
-#[allow(clippy::type_complexity)]
 fn pause_menu_action(
     interaction_query: Query<(&Interaction, &PauseMenuAction), (Changed<Interaction>, With<Button>)>,
     mut game_state: ResMut<NextState<GameState>>,

@@ -4,7 +4,6 @@ use crate::components::SelectedOption;
 use crate::constants::{BUTTON_HOVERED, BUTTON_HOVERED_PRESSED, BUTTON_NORMAL, BUTTON_PRESSED, COLOR_TEXT};
 
 // This system handles changing all buttons color based on mouse interaction
-#[allow(clippy::type_complexity)]
 pub fn button_system(
     mut interaction_query: Query<
         (&Interaction, &mut BackgroundColor, Option<&SelectedOption>),

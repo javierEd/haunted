@@ -1,13 +1,9 @@
 use bevy::audio::Volume;
-use bevy::input::InputSystems;
-use bevy::input::mouse::MouseMotion;
 use bevy::pbr::ContactShadows;
 use bevy::prelude::*;
-use bevy::window::{CursorGrabMode, CursorOptions};
 use bevy_rapier3d::prelude::*;
 
 use crate::game_plugin::constants::*;
-use crate::game_plugin::events::{ContinueEvent, InteractionEvent, TalkEvent};
 use crate::game_plugin::resources::{LoadingData, PlayerLookInput, PlayerMovementInput, PlayerSounds};
 use crate::game_plugin::states::GameState;
 use crate::states::AppState;
@@ -19,17 +15,8 @@ impl Plugin for PlayerPlugin {
         app.insert_resource(PlayerLookInput::default())
             .insert_resource(PlayerMovementInput::default())
             .add_systems(OnEnter(AppState::Game), (setup_player, setup_sounds))
-            .add_systems(
-                PreUpdate,
-                handle_input.after(InputSystems).run_if(
-                    in_state(GameState::Playing)
-                        .or_else(in_state(GameState::InDialog))
-                        .or_else(in_state(GameState::Paused)),
-                ),
-            )
             .add_systems(Update, player_look.run_if(in_state(GameState::Playing)))
             .add_systems(FixedUpdate, player_movement.run_if(in_state(GameState::Playing)))
-            .add_systems(Update, toggle_cursor.run_if(in_state(AppState::Game)))
             .add_systems(OnExit(AppState::Game), cleanup_player);
     }
 }
@@ -100,88 +87,6 @@ fn setup_sounds(mut commands: Commands, asset_server: Res<AssetServer>, mut load
             },
         ),
     });
-}
-
-fn handle_input(
-    mut commands: Commands,
-    mut keyboard: ResMut<ButtonInput<KeyCode>>,
-    mut look: ResMut<PlayerLookInput>,
-    mut movement: ResMut<PlayerMovementInput>,
-    mut mouse_events: MessageReader<MouseMotion>,
-    game_state: Res<State<GameState>>,
-    mut next_game_state: ResMut<NextState<GameState>>,
-    mut in_dialog: Local<bool>,
-) {
-    if keyboard.just_pressed(KeyCode::Escape) {
-        if game_state.get().is_paused() {
-            next_game_state.set(if *in_dialog {
-                GameState::InDialog
-            } else {
-                GameState::Playing
-            });
-        } else {
-            *in_dialog = game_state.get().is_in_dialog();
-
-            next_game_state.set(GameState::Paused);
-        }
-
-        return;
-    }
-
-    if game_state.get().is_paused() {
-        keyboard.clear();
-        mouse_events.clear();
-
-        return;
-    }
-
-    if game_state.get().is_in_dialog() {
-        mouse_events.clear();
-
-        if keyboard.just_pressed(KeyCode::Enter) {
-            commands.trigger(ContinueEvent);
-        }
-
-        return;
-    }
-
-    if keyboard.just_pressed(KeyCode::KeyE) {
-        commands.trigger(InteractionEvent);
-    } else if keyboard.just_pressed(KeyCode::KeyT) {
-        commands.trigger(TalkEvent);
-    }
-
-    if keyboard.pressed(KeyCode::KeyW) {
-        movement.z -= 1.0;
-    }
-
-    if keyboard.pressed(KeyCode::KeyS) {
-        movement.z += 1.0
-    }
-
-    if keyboard.pressed(KeyCode::KeyA) {
-        movement.x -= 1.0;
-    }
-
-    if keyboard.pressed(KeyCode::KeyD) {
-        movement.x += 1.0
-    }
-
-    **movement = movement.normalize_or_zero();
-
-    if keyboard.pressed(KeyCode::ShiftLeft) {
-        **movement *= 2.0;
-    }
-
-    if keyboard.pressed(KeyCode::Space) {
-        movement.y = 1.0;
-    }
-
-    for event in mouse_events.read() {
-        look.x -= event.delta.x * MOUSE_SENSITIVITY;
-        look.y -= event.delta.y * MOUSE_SENSITIVITY;
-        look.y = look.y.clamp(-89.9, 89.9); // Limit pitch
-    }
 }
 
 fn player_look(
@@ -267,24 +172,7 @@ fn player_movement(
     }
 }
 
-fn toggle_cursor(game_state: Res<State<GameState>>, mut cursor_options: Single<&mut CursorOptions>) {
-    if game_state.get().is_playing() {
-        cursor_options.visible = false;
-        cursor_options.grab_mode = CursorGrabMode::Locked;
-    } else {
-        cursor_options.visible = true;
-        cursor_options.grab_mode = CursorGrabMode::None;
-    }
-}
-
-fn cleanup_player(
-    mut keyboard: ResMut<ButtonInput<KeyCode>>,
-    mut mouse_events: MessageReader<MouseMotion>,
-    mut look: ResMut<PlayerLookInput>,
-    mut movement: ResMut<PlayerMovementInput>,
-) {
-    keyboard.clear();
-    mouse_events.clear();
+fn cleanup_player(mut look: ResMut<PlayerLookInput>, mut movement: ResMut<PlayerMovementInput>) {
     *look = PlayerLookInput::default();
     *movement = PlayerMovementInput::default();
 }

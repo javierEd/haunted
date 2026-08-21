@@ -92,7 +92,7 @@ pub fn setup_objects(
 
     commands.spawn((
         DespawnOnExit(AppState::Game),
-        Door::Locked,
+        Door::OPENABLE,
         Transform::from_xyz(-0.06, 1.3, -17.356),
         WorldAssetRoot(door_asset.clone()),
         AsyncCollider::default(),
@@ -100,7 +100,7 @@ pub fn setup_objects(
 
     commands.spawn((
         DespawnOnExit(AppState::Game),
-        Door::Locked,
+        Door::OPENABLE,
         Transform::from_xyz(-1.018, 1.3, -20.386).with_rotation(Quat::from_rotation_y(FRAC_PI_2)),
         WorldAssetRoot(door_asset.clone()),
         AsyncCollider::default(),
@@ -108,7 +108,7 @@ pub fn setup_objects(
 
     commands.spawn((
         DespawnOnExit(AppState::Game),
-        Door::Locked,
+        Door::OPENABLE,
         Transform::from_xyz(-1.018, 1.3, -24.133).with_rotation(Quat::from_rotation_y(FRAC_PI_2)),
         WorldAssetRoot(door_asset.clone()),
         AsyncCollider::default(),
@@ -116,7 +116,7 @@ pub fn setup_objects(
 
     commands.spawn((
         DespawnOnExit(AppState::Game),
-        Door::Locked,
+        Door::OPENABLE,
         Transform::from_xyz(0.099, 1.3, -25.182),
         WorldAssetRoot(door_asset.clone()),
         AsyncCollider::default(),
@@ -124,7 +124,7 @@ pub fn setup_objects(
 
     commands.spawn((
         DespawnOnExit(AppState::Game),
-        Door::Locked,
+        Door::OPENABLE,
         Transform::from_xyz(3.145, 1.3, -27.206).with_rotation(Quat::from_rotation_y(PI)),
         WorldAssetRoot(door_asset),
         AsyncCollider::default(),

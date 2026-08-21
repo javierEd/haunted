@@ -2,9 +2,9 @@ use bevy::camera::visibility::VisibleEntities;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
-use crate::game_plugin::components::{DelayTimer, Door};
+use crate::game_plugin::components::{AfterInteractionTimer, AfterKnockTimer, Door, Talk};
 
-pub trait QueryTrait {
+pub trait DoorQueryTrait {
     fn nearest(
         &self,
         _player_query: Query<&Transform, With<KinematicCharacterController>>,
@@ -13,18 +13,11 @@ pub trait QueryTrait {
     ) -> Option<(Entity, &Door, &Transform)> {
         None
     }
-
-    fn nearest_mut(
-        &mut self,
-        _player_query: Query<&Transform, With<KinematicCharacterController>>,
-        _camera_query: Query<&VisibleEntities, With<Camera>>,
-        _children_query: Query<&Children>,
-    ) -> Option<(Entity, Mut<'_, Door>, &Transform)> {
-        None
-    }
 }
 
-impl QueryTrait for Query<'_, '_, (Entity, &Door, &Transform), Without<DelayTimer>> {
+impl DoorQueryTrait
+    for Query<'_, '_, (Entity, &Door, &Transform), (Without<AfterInteractionTimer>, Without<AfterKnockTimer>)>
+{
     fn nearest(
         &self,
         player_query: Query<&Transform, With<KinematicCharacterController>>,
@@ -61,13 +54,24 @@ impl QueryTrait for Query<'_, '_, (Entity, &Door, &Transform), Without<DelayTime
     }
 }
 
-impl QueryTrait for Query<'_, '_, (Entity, &mut Door, &Transform), Without<DelayTimer>> {
-    fn nearest_mut(
-        &mut self,
+pub trait QueryTrait {
+    fn nearest(
+        &self,
+        _player_query: Query<&Transform, With<KinematicCharacterController>>,
+        _camera_query: Query<&VisibleEntities, With<Camera>>,
+        _children_query: Query<&Children>,
+    ) -> Option<(Entity, &Transform)> {
+        None
+    }
+}
+
+impl QueryTrait for Query<'_, '_, (Entity, &Transform), With<Talk>> {
+    fn nearest(
+        &self,
         player_query: Query<&Transform, With<KinematicCharacterController>>,
         camera_query: Query<&VisibleEntities, With<Camera>>,
         children_query: Query<&Children>,
-    ) -> Option<(Entity, Mut<'_, Door>, &Transform)> {
+    ) -> Option<(Entity, &Transform)> {
         let Ok(player_transform) = player_query.single() else {
             return None;
         };
@@ -76,20 +80,15 @@ impl QueryTrait for Query<'_, '_, (Entity, &mut Door, &Transform), Without<Delay
             return None;
         };
 
-        self.iter_mut()
-            .filter(|(e, d, t)| {
-                let door_translation = if d.is_open() {
-                    t.translation + (t.forward() * 0.5)
-                } else {
-                    t.translation
-                };
-
-                door_translation.is_near(&player_transform.translation)
-                    && children_query
-                        .iter_descendants(*e)
-                        .any(|ce| camera_visible_entities.is_visible(ce))
+        self.iter()
+            .filter(|(e, t)| {
+                t.translation.is_near(&player_transform.translation)
+                    && (camera_visible_entities.is_visible(*e)
+                        || children_query
+                            .iter_descendants(*e)
+                            .any(|ce| camera_visible_entities.is_visible(ce)))
             })
-            .min_by(move |(_, _, t1), (_, _, t2)| {
+            .min_by(move |(_, t1), (_, t2)| {
                 t1.translation
                     .distance(player_transform.translation)
                     .partial_cmp(&t2.translation.distance(player_transform.translation))
