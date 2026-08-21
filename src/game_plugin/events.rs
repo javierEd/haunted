@@ -2,19 +2,34 @@ use bevy::prelude::*;
 
 use crate::game_plugin::resources::DialogBoxMessage;
 
+#[derive(Event)]
+pub struct ContinueKeyEvent;
+
+#[derive(Event)]
+pub struct DialogBoxClosedEvent;
+
+#[derive(EntityEvent)]
+pub struct DoorCloseEvent {
+    pub entity: Entity,
+}
+
 #[derive(EntityEvent)]
 pub struct DoorKnockEvent {
     pub entity: Entity,
 }
 
-#[derive(Event)]
-pub struct InteractionEvent;
+#[derive(EntityEvent)]
+pub struct DoorOpenEvent {
+    pub entity: Entity,
+}
 
 #[derive(Event)]
-pub struct ContinueEvent;
+pub struct InteractionKeyEvent;
 
-#[derive(Event)]
-pub struct TalkEvent;
+#[derive(EntityEvent)]
+pub struct TalkEvent {
+    pub entity: Entity,
+}
 
 #[derive(Default, Event)]
 pub struct DialogBoxEvent {

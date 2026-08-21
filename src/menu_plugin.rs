@@ -56,7 +56,6 @@ enum MenuButtonAction {
 
 // This system updates the settings when a new value for a setting is selected, and marks
 // the button as the one currently selected
-#[allow(clippy::type_complexity)]
 fn setting_button<T: Resource<Mutability = Mutable> + Component + PartialEq + Copy>(
     interaction_query: Query<(&Interaction, &Setting<T>, Entity), (Changed<Interaction>, With<Button>)>,
     selected_query: Single<(Entity, &mut BackgroundColor), With<SelectedOption>>,
@@ -322,7 +321,6 @@ fn setup_sound_settings_menu(mut commands: Commands, volume: Res<Volume>) {
     ));
 }
 
-#[allow(clippy::type_complexity)]
 fn menu_action(
     interaction_query: Query<(&Interaction, &MenuButtonAction), (Changed<Interaction>, With<Button>)>,
     mut app_exit_writer: MessageWriter<AppExit>,
