@@ -36,6 +36,7 @@ impl Plugin for GamePlugin {
             InputPlugin,
             PlayerPlugin,
             PlayerInteractionPlugin,
+            LockPickingPlugin,
             DialogBoxPlugin,
             HelpBoxPlugin,
             PauseMenuPlugin,

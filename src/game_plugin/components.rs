@@ -19,7 +19,7 @@ impl AfterKnockTimer {
 }
 
 #[derive(Clone)]
-pub enum DoorIteraction {
+pub enum DoorInteraction {
     Knock,
     Open,
 }
@@ -34,25 +34,25 @@ pub enum DoorStatus {
 
 #[derive(Clone, Component)]
 pub struct Door {
-    pub interaction: DoorIteraction,
+    pub interaction: DoorInteraction,
     pub status: DoorStatus,
 }
 
 impl Door {
     pub const KNOCKABLE: Self = Self {
-        interaction: DoorIteraction::Knock,
+        interaction: DoorInteraction::Knock,
         status: DoorStatus::Locked,
     };
     pub const MAP_LIMIT: Self = Self {
-        interaction: DoorIteraction::Open,
+        interaction: DoorInteraction::Open,
         status: DoorStatus::MapLimit,
     };
     pub const LOCKED: Self = Self {
-        interaction: DoorIteraction::Open,
+        interaction: DoorInteraction::Open,
         status: DoorStatus::Locked,
     };
     pub const OPENABLE: Self = Self {
-        interaction: DoorIteraction::Open,
+        interaction: DoorInteraction::Open,
         status: DoorStatus::Closed,
     };
 
@@ -65,11 +65,22 @@ impl Door {
             DoorStatus::Open
         } else {
             match self.interaction {
-                DoorIteraction::Open => DoorStatus::Closed,
-                DoorIteraction::Knock => DoorStatus::Locked,
+                DoorInteraction::Open => DoorStatus::Closed,
+                DoorInteraction::Knock => DoorStatus::Locked,
             }
         };
     }
+}
+
+#[derive(Clone, Component, Default)]
+pub struct Light {
+    pub id: String,
+    pub is_on: bool,
+}
+
+#[derive(Component)]
+pub struct LightSwitch {
+    pub target_id: String,
 }
 
 #[derive(Component)]

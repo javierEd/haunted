@@ -22,7 +22,7 @@ impl Plugin for DialogBoxPlugin {
             )
             .add_systems(Update, continue_button_action.run_if(in_state(GameState::InDialog)))
             .add_systems(OnExit(AppState::Game), cleanup_dialog_box)
-            .add_observer(on_event)
+            .add_observer(on_lock_picking_event)
             .add_observer(on_continue_key_event);
     }
 }
@@ -82,7 +82,7 @@ fn setup_dialog_box(mut commands: Commands) {
     ));
 }
 
-fn on_event(event: On<DialogBoxEvent>, mut commands: Commands) {
+fn on_lock_picking_event(event: On<DialogBoxEvent>, mut commands: Commands) {
     commands.insert_resource(DialogBoxMessages(event.messages.clone()));
 }
 

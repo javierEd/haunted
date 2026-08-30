@@ -2,9 +2,11 @@ use bevy::camera::visibility::VisibleEntities;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
-use crate::game_plugin::components::{AfterInteractionTimer, AfterKnockTimer, Door, DoorIteraction, DoorStatus, Talk};
+use crate::game_plugin::components::{
+    AfterInteractionTimer, AfterKnockTimer, Door, DoorInteraction, DoorStatus, Light, LightSwitch, Talk,
+};
 use crate::game_plugin::events::*;
-use crate::game_plugin::helpers::{DoorQueryTrait, QueryTrait};
+use crate::game_plugin::helpers::{ComponentQueryTrait, QueryTrait};
 use crate::game_plugin::resources::{DialogBoxMessage, DoorAnimations, PlayerSounds};
 
 pub struct PlayerInteractionPlugin;
@@ -14,6 +16,7 @@ impl Plugin for PlayerInteractionPlugin {
         app.add_systems(Update, thick_after_interaction)
             .add_systems(Update, thick_after_knock)
             .add_observer(on_interaction_key_event)
+            .add_observer(on_toggle_light_event)
             .add_observer(on_door_open_event)
             .add_observer(on_door_close_event);
     }
@@ -42,6 +45,19 @@ fn thick_after_knock(mut commands: Commands, time: Res<Time>, mut query: Query<(
             commands.entity(entity).remove::<AfterKnockTimer>();
         }
     }
+}
+
+fn on_toggle_light_event(event: On<ToggleLightEvent>, mut light_query: Query<(&mut Light, &mut Visibility)>) {
+    let Ok((mut light, mut visibility)) = light_query.get_mut(event.entity) else {
+        return;
+    };
+
+    light.is_on = !light.is_on;
+    *visibility = if light.is_on {
+        Visibility::default()
+    } else {
+        Visibility::Hidden
+    };
 }
 
 fn on_door_open_event(
@@ -101,11 +117,21 @@ fn on_interaction_key_event(
     mut commands: Commands,
     player_query: Query<&Transform, With<KinematicCharacterController>>,
     camera_query: Query<&VisibleEntities, With<Camera>>,
-    door_query: Query<(Entity, &Door, &Transform), (Without<AfterInteractionTimer>, Without<AfterKnockTimer>)>,
+    switch_query: Query<(Entity, &LightSwitch, &Transform)>,
     talk_query: Query<(Entity, &Transform), With<Talk>>,
+    door_query: Query<(Entity, &Door, &Transform), (Without<AfterInteractionTimer>, Without<AfterKnockTimer>)>,
+    light_query: Query<(Entity, &Light)>,
     children_query: Query<&Children>,
     player_sounds: Res<PlayerSounds>,
 ) {
+    if let Some((_, light_switch, _)) = switch_query.nearest(player_query, camera_query, children_query)
+        && let Some((entity, _)) = light_query.iter().find(|(_, l)| l.id == light_switch.target_id)
+    {
+        commands.trigger(ToggleLightEvent { entity });
+
+        return;
+    }
+
     if let Some((entity, _)) = talk_query.nearest(player_query, camera_query, children_query) {
         commands.trigger(TalkEvent { entity });
 
@@ -119,23 +145,21 @@ fn on_interaction_key_event(
     commands.entity(entity).insert(AfterInteractionTimer::new(2.25));
 
     match (door.interaction.clone(), door.status.clone()) {
-        (DoorIteraction::Open, DoorStatus::Closed) => {
+        (DoorInteraction::Open, DoorStatus::Closed) => {
             commands.trigger(DoorOpenEvent { entity });
         }
-        (DoorIteraction::Open, DoorStatus::Open) => {
+        (DoorInteraction::Open, DoorStatus::Open) => {
             commands.trigger(DoorCloseEvent { entity });
         }
-        (DoorIteraction::Open, DoorStatus::Locked) => {
-            commands.trigger(DialogBoxEvent::with_message(DialogBoxMessage::player(
-                "This door is locked.",
-            )));
+        (DoorInteraction::Open, DoorStatus::Locked) => {
+            commands.trigger(LockPickingEvent { entity });
         }
-        (DoorIteraction::Open, DoorStatus::MapLimit) => {
+        (DoorInteraction::Open, DoorStatus::MapLimit) => {
             commands.trigger(DialogBoxEvent::with_message(DialogBoxMessage::player(
                 "I have things to do here first.",
             )));
         }
-        (DoorIteraction::Knock, DoorStatus::Locked) => {
+        (DoorInteraction::Knock, DoorStatus::Locked) | (DoorInteraction::Knock, DoorStatus::Closed) => {
             commands.entity(entity).insert(AfterKnockTimer::new(2.0));
             commands.spawn(player_sounds.knock_bundle.clone());
         }

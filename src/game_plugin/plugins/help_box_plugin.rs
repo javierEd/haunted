@@ -2,8 +2,10 @@ use bevy::camera::visibility::VisibleEntities;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
-use crate::game_plugin::components::{AfterInteractionTimer, AfterKnockTimer, Door, DoorIteraction, Talk};
-use crate::game_plugin::helpers::{DoorQueryTrait, QueryTrait};
+use crate::game_plugin::components::{
+    AfterInteractionTimer, AfterKnockTimer, Door, DoorInteraction, DoorStatus, LightSwitch, Talk,
+};
+use crate::game_plugin::helpers::{ComponentQueryTrait, QueryTrait};
 use crate::game_plugin::states::{ChapterState, GameState};
 use crate::states::AppState;
 
@@ -42,6 +44,7 @@ fn toggle_interaction_help_box(
     game_state: Res<State<GameState>>,
     player_query: Query<&Transform, With<KinematicCharacterController>>,
     camera_query: Query<&VisibleEntities, With<Camera>>,
+    switch_query: Query<(Entity, &Transform), With<LightSwitch>>,
     talk_query: Query<(Entity, &Transform), With<Talk>>,
     door_query: Query<(Entity, &Door, &Transform), (Without<AfterInteractionTimer>, Without<AfterKnockTimer>)>,
     children_query: Query<&Children>,
@@ -58,6 +61,13 @@ fn toggle_interaction_help_box(
         return;
     }
 
+    if let Some((_, _)) = switch_query.nearest(player_query, camera_query, children_query) {
+        **interaction_text = "Press E to switch light".to_owned();
+        *visibility = Visibility::default();
+
+        return;
+    }
+
     if let Some((_, _)) = talk_query.nearest(player_query, camera_query, children_query) {
         **interaction_text = "Press E to talk".to_owned();
         *visibility = Visibility::default();
@@ -67,17 +77,17 @@ fn toggle_interaction_help_box(
 
     if let Some((_, door, _)) = door_query.nearest(player_query, camera_query, children_query) {
         match door.interaction {
-            DoorIteraction::Knock => {
+            DoorInteraction::Knock => {
                 if !door.is_open() {
                     **interaction_text = "Press E to knock door".to_owned();
                     *visibility = Visibility::default();
                 }
             }
-            DoorIteraction::Open => {
-                **interaction_text = if door.is_open() {
-                    "Press E to close door".to_owned()
-                } else {
-                    "Press E to open door".to_owned()
+            DoorInteraction::Open => {
+                **interaction_text = match door.status {
+                    DoorStatus::Open => "Press E to close door".to_owned(),
+                    DoorStatus::Locked => "Press E to unlock door".to_owned(),
+                    _ => "Press E to open door".to_owned(),
                 };
 
                 *visibility = Visibility::default();
