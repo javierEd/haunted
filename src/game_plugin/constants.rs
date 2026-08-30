@@ -1,6 +1,3 @@
-pub const ASSET_PATH_CHARACTER_NEIGHBOR_301: &str = "characters/neighbor-301.glb";
-pub const ASSET_PATH_CHARACTER_NEIGHBOR_303: &str = "characters/neighbor-303.glb";
-pub const ASSET_PATH_MAP_CHAPTER_1: &str = "maps/chapter-1.glb";
 pub const ASSET_PATH_MAP_CHAPTER_2: &str = "maps/chapter-2.glb";
 pub const ASSET_PATH_OBJECT_DOOR: &str = "objects/door.glb";
 pub const ASSET_PATH_SOUND_KNOCK: &str = "sounds/knock.ogg";

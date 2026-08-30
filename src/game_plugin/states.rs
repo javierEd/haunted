@@ -20,6 +20,7 @@ pub enum GameState {
     Loading,
     Playing,
     InDialog,
+    InLockPicking,
     Paused,
     Over,
 }
@@ -31,10 +32,6 @@ impl GameState {
 
     pub fn is_playing(&self) -> bool {
         matches!(self, GameState::Playing)
-    }
-
-    pub fn is_in_dialog(&self) -> bool {
-        matches!(self, GameState::InDialog)
     }
 
     pub fn is_paused(&self) -> bool {

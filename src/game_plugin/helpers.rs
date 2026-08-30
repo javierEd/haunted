@@ -2,20 +2,20 @@ use bevy::camera::visibility::VisibleEntities;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
-use crate::game_plugin::components::{AfterInteractionTimer, AfterKnockTimer, Door, Talk};
+use crate::game_plugin::components::{AfterInteractionTimer, AfterKnockTimer, Door, LightSwitch};
 
-pub trait DoorQueryTrait {
+pub trait ComponentQueryTrait<T: Component> {
     fn nearest(
         &self,
         _player_query: Query<&Transform, With<KinematicCharacterController>>,
         _camera_query: Query<&VisibleEntities, With<Camera>>,
         _children_query: Query<&Children>,
-    ) -> Option<(Entity, &Door, &Transform)> {
+    ) -> Option<(Entity, &T, &Transform)> {
         None
     }
 }
 
-impl DoorQueryTrait
+impl ComponentQueryTrait<Door>
     for Query<'_, '_, (Entity, &Door, &Transform), (Without<AfterInteractionTimer>, Without<AfterKnockTimer>)>
 {
     fn nearest(
@@ -54,6 +54,38 @@ impl DoorQueryTrait
     }
 }
 
+impl ComponentQueryTrait<LightSwitch> for Query<'_, '_, (Entity, &LightSwitch, &Transform)> {
+    fn nearest(
+        &self,
+        player_query: Query<&Transform, With<KinematicCharacterController>>,
+        camera_query: Query<&VisibleEntities, With<Camera>>,
+        children_query: Query<&Children>,
+    ) -> Option<(Entity, &LightSwitch, &Transform)> {
+        let Ok(player_transform) = player_query.single() else {
+            return None;
+        };
+
+        let Ok(camera_visible_entities) = camera_query.single() else {
+            return None;
+        };
+
+        self.iter()
+            .filter(|(e, _, t)| {
+                t.translation.is_near(&player_transform.translation)
+                    && (camera_visible_entities.is_visible(*e)
+                        || children_query
+                            .iter_descendants(*e)
+                            .any(|ce| camera_visible_entities.is_visible(ce)))
+            })
+            .min_by(move |(_, _, t1), (_, _, t2)| {
+                t1.translation
+                    .distance(player_transform.translation)
+                    .partial_cmp(&t2.translation.distance(player_transform.translation))
+                    .unwrap()
+            })
+    }
+}
+
 pub trait QueryTrait {
     fn nearest(
         &self,
@@ -65,7 +97,7 @@ pub trait QueryTrait {
     }
 }
 
-impl QueryTrait for Query<'_, '_, (Entity, &Transform), With<Talk>> {
+impl<T: Component> QueryTrait for Query<'_, '_, (Entity, &Transform), With<T>> {
     fn nearest(
         &self,
         player_query: Query<&Transform, With<KinematicCharacterController>>,
@@ -103,7 +135,7 @@ trait Vec3Trait {
 
 impl Vec3Trait for Vec3 {
     fn is_near(&self, target_translation: &Vec3) -> bool {
-        self.distance(*target_translation) < 1.2
+        self.distance(*target_translation) < 1.0
     }
 }
 
@@ -130,7 +162,7 @@ impl ReadRapierContextTrait for ReadRapierContext<'_, '_> {
             .ok()
             .and_then(|rc| {
                 rc.cast_ray(
-                    origin_transform.translation + (origin_transform.forward() * 0.26),
+                    origin_transform.translation + (origin_transform.forward() * 0.225),
                     target_transform.translation - origin_transform.translation,
                     bevy_rapier3d::math::Real::MAX,
                     true,

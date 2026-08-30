@@ -8,29 +8,6 @@ pub struct ContinueKeyEvent;
 #[derive(Event)]
 pub struct DialogBoxClosedEvent;
 
-#[derive(EntityEvent)]
-pub struct DoorCloseEvent {
-    pub entity: Entity,
-}
-
-#[derive(EntityEvent)]
-pub struct DoorKnockEvent {
-    pub entity: Entity,
-}
-
-#[derive(EntityEvent)]
-pub struct DoorOpenEvent {
-    pub entity: Entity,
-}
-
-#[derive(Event)]
-pub struct InteractionKeyEvent;
-
-#[derive(EntityEvent)]
-pub struct TalkEvent {
-    pub entity: Entity,
-}
-
 #[derive(Default, Event)]
 pub struct DialogBoxEvent {
     pub messages: Vec<DialogBoxMessage>,
@@ -52,4 +29,46 @@ impl DialogBoxEvent {
 
         event
     }
+}
+
+#[derive(EntityEvent)]
+pub struct DoorCloseEvent {
+    pub entity: Entity,
+}
+
+#[derive(EntityEvent)]
+pub struct DoorKnockEvent {
+    pub entity: Entity,
+}
+
+#[derive(EntityEvent)]
+pub struct DoorOpenEvent {
+    pub entity: Entity,
+}
+
+#[derive(Event)]
+pub struct InteractionKeyEvent;
+
+#[derive(EntityEvent)]
+pub struct ToggleLightEvent {
+    pub entity: Entity,
+}
+
+#[derive(EntityEvent)]
+pub struct LockPickingEvent {
+    pub entity: Entity,
+}
+
+#[derive(Event)]
+pub struct LockPickingMoveLeftEvent;
+
+#[derive(Event)]
+pub struct LockPickingMoveRightEvent;
+
+#[derive(Event)]
+pub struct LockPickingRotateEvent;
+
+#[derive(EntityEvent)]
+pub struct TalkEvent {
+    pub entity: Entity,
 }

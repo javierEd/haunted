@@ -36,7 +36,7 @@ fn setup_player(mut commands: Commands) {
             DespawnOnExit(AppState::Game),
             Transform::from_xyz(0.0, 1.0, 0.0),
             Visibility::default(),
-            Collider::round_cylinder(0.85, 0.25, 0.0),
+            Collider::round_cylinder(0.85, 0.225, 0.0),
             KinematicCharacterController {
                 custom_mass: Some(5.0),
                 up: Vec3::Y,
@@ -63,7 +63,7 @@ fn setup_player(mut commands: Commands) {
                 DespawnOnExit(AppState::Game),
                 Camera3d::default(),
                 ContactShadows::default(),
-                Transform::from_xyz(0.0, 0.70, -0.1).looking_at(Vec3::ZERO, Vec3::Y),
+                Transform::from_xyz(0.0, 0.70, -0.075).looking_at(Vec3::ZERO, Vec3::Y),
             ));
         });
 }
